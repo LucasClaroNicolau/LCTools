@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC Tools - Lucas Claro Utilitários</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-red: #ff0033;
+            --primary-red-hover: #e0002d;
+            --bg-gradient: linear-gradient(180deg, #fff5f5 0%, #ffffff 40%, #f8f9fa 100%);
+            --text-main: #111827;
+            --text-muted: #6b7280;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar Styling */
+        .navbar-custom {
+            padding: 1.2rem 0;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .brand-logo {
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: #000;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-logo .badge-lc {
+            background: var(--primary-red);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-logo span.full-name {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-left: 2px;
+        }
+
+        .nav-link {
+            font-weight: 600;
+            color: #374151 !important;
+            padding: 8px 16px !important;
+            border-radius: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-red) !important;
+            background-color: #fff0f2;
+        }
+
+        /* Hero & Sections */
+        .hero-section {
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+
+        .tag-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #ffe6e9;
+            color: var(--primary-red);
+            font-weight: 700;
+            font-size: 0.82rem;
+            padding: 6px 14px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+        }
+
+        .hero-title {
+            font-size: 2.75rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+            color: #000;
+        }
+
+        .hero-subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            max-width: 620px;
+            margin: 0 auto 36px;
+            line-height: 1.6;
+        }
+
+        /* Search Card Container */
+        .search-card {
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px -15px rgba(255, 0, 51, 0.12), 0 0 20px rgba(0,0,0,0.03);
+            border: 1px solid #f3f4f6;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f9fafb;
+            border-radius: 18px;
+            padding: 6px 6px 6px 16px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--primary-red);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(255, 0, 51, 0.1);
+        }
+
+        .input-wrapper i.search-icon {
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+
+        .custom-input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            padding: 10px 0;
+            font-size: 0.95rem;
+            color: #1f2937;
+            outline: none;
+        }
+
+        .btn-paste {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-paste:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .btn-download {
+            background: var(--primary-red);
+            color: #ffffff;
+            font-weight: 700;
+            padding: 12px 28px;
+            border-radius: 14px;
+            border: none;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 18px rgba(255, 0, 51, 0.3);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-download:hover {
+            background: var(--primary-red-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(255, 0, 51, 0.4);
+            color: white;
+        }
+
+        /* Option Chips */
+        .options-container {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .option-chip {
+            cursor: pointer;
+        }
+
+        .option-chip input {
+            display: none;
+        }
+
+        .option-chip .chip-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: #f3f4f6;
+            border-radius: 50px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #4b5563;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .option-chip input:checked + .chip-label {
+            background: #fff0f2;
+            color: var(--primary-red);
+            border-color: #ffccd3;
+        }
+
+        .tip-text {
+            font-size: 0.82rem;
+            color: #9ca3af;
+            margin-top: 20px;
+        }
+
+        /* Dropzone */
+        .dropzone-container {
+            border: 2px dashed #d1d5db;
+            border-radius: 20px;
+            padding: 40px 20px;
+            background: #fafafa;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dropzone-container:hover {
+            border-color: var(--primary-red);
+            background: #fff0f2;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 24px 0;
+            border-top: 1px solid #f3f4f6;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container">
+            <a class="brand-logo" href="/">
+                <span class="badge-lc">LC</span> Tools
+                <span class="full-name">| Lucas Claro</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+                            <i class="fa-solid fa-video me-1"></i> YouTube Downloader
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/remove-bg' %}active{% endif %}" href="/remove-bg">
+                            <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Remover Fundo
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show mt-3 rounded-4 shadow-sm" role="alert">
+                        <i class="fa-solid fa-circle-info me-2"></i> {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p class="mb-0">© LC Tools - Desenvolvido por <strong>Lucas Claro</strong>. Arquivos temporários excluídos automaticamente a cada 5 minutos.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 Bundle JS (corrigido src) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function pasteClipboard(inputId) {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    document.getElementById(inputId).value = text;
+                }
+            } catch (err) {
+                alert("Por favor, cole o link manualmente ou dê permissão de acesso à área de transferência.");
+            }
+        }
+    </script>
+</body>
+</html>

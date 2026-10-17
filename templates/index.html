@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="tag-pill">
+        <i class="fa-solid fa-circle-dot"></i> YouTube Downloader
+    </div>
+    <h1 class="hero-title">Baixe Vídeos e Áudios do YouTube</h1>
+    <p class="hero-subtitle">
+        Cole o link de um vídeo ou Shorts do YouTube, selecione o formato desejado (MP4 ou MP3) e faça o download em alta qualidade em segundos.
+    </p>
+
+    <div class="search-card">
+        <form action="/youtube" method="POST">
+            <div class="input-wrapper">
+                <i class="fa-solid fa-link search-icon"></i>
+                <input type="url" class="custom-input" id="youtube_url" name="url" placeholder="Cole o link do vídeo ou Shorts do YouTube aqui..." required autocomplete="off">
+                <button type="button" class="btn-paste" onclick="pasteClipboard('youtube_url')">
+                    <i class="fa-regular fa-paste"></i> Colar
+                </button>
+                <button type="submit" class="btn-download">
+                    <i class="fa-solid fa-download"></i> Baixar
+                </button>
+            </div>
+
+            <div class="options-container">
+                <label class="option-chip">
+                    <input type="radio" name="format_type" value="mp4" checked>
+                    <span class="chip-label"><i class="fa-solid fa-film"></i> Vídeo MP4</span>
+                </label>
+                <label class="option-chip">
+                    <input type="radio" name="format_type" value="mp3">
+                    <span class="chip-label"><i class="fa-solid fa-music"></i> Áudio MP3</span>
+                </label>
+            </div>
+        </form>
+    </div>
+
+    <p class="tip-text">
+        <i class="fa-regular fa-lightbulb me-1"></i> Dica: Abra o vídeo no YouTube, clique em <strong>Compartilhar → Copiar Link</strong> e cole acima.
+    </p>
+</section>
+{% endblock %}

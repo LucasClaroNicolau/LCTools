@@ -1,0 +1,15 @@
+# Ambiente Virtual
+venv/
+env/
+.venv/
+
+# Caches do Python
+__pycache__/
+*.py[cod]
+
+# Arquivos baixados e uploads temporários
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Configurações de ambiente / chaves secretas
+.env
