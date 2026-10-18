@@ -107,12 +107,8 @@ def process_youtube(task_id, url, format_type):
                                        "msg": "Convertendo / Finalizando arquivo..."}
 
     ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',  # Pede o melhor vídeo e o melhor áudio para o ffmpeg juntar
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'web']
-            }
-        },
+        'format': 'bestvideo+bestaudio/best',  # Pede o melhor vídeo + melhor áudio disponíveis
+        'cookiefile': 'youtube.com_cookies.txt',  # Autenticação com a conta
         'outtmpl': 'static/uploads/%(id)s.%(ext)s',
     }
 
