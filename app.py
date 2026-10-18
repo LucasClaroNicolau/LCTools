@@ -107,8 +107,13 @@ def process_youtube(task_id, url, format_type):
                                        "msg": "Convertendo / Finalizando arquivo..."}
 
     ydl_opts = {
-        'progress_hooks': [progress_hook],
-        'noplaylist': True,
+        'format': 'bestvideo+bestaudio/best',  # Pede o melhor vídeo e o melhor áudio para o ffmpeg juntar
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web']
+            }
+        },
+        'outtmpl': 'static/uploads/%(id)s.%(ext)s',
     }
 
     if format_type == 'mp3':
