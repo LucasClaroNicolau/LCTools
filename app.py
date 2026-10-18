@@ -10,7 +10,7 @@ from PIL import Image
 app = Flask(__name__)
 app.secret_key = "lc-tools-chave-secreta-para-mensagens-flash"
 
-# Limite máximo de upload (50 MB)
+# Limite máximo de upload (50 MB corrigido)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
 DOWNLOAD_FOLDER = os.path.join('static', 'uploads')
@@ -106,16 +106,17 @@ def process_youtube(task_id, url, format_type):
             PROGRESS_STORE[task_id] = {"progress": 95, "status": "converting",
                                        "msg": "Convertendo / Finalizando arquivo..."}
 
+    # Base de opções do yt-dlp garantindo SEMPRE o cookie e o hook de progresso
     ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',  # Pede o melhor vídeo + melhor áudio disponíveis
-        'cookiefile': 'youtube.com_cookies.txt',  # Autenticação com a conta
-        'outtmpl': 'static/uploads/%(id)s.%(ext)s',
+        'cookiefile': 'youtube.com_cookies.txt',  # Essencial para autenticação
+        'outtmpl': output_template,
+        'progress_hooks': [progress_hook],
+        'noplaylist': True,
     }
 
     if format_type == 'mp3':
         ydl_opts.update({
             'format': 'bestaudio/best',
-            'outtmpl': output_template,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -124,8 +125,7 @@ def process_youtube(task_id, url, format_type):
         })
     else:
         ydl_opts.update({
-            'format': 'best/bestvideo+bestaudio',
-            'outtmpl': output_template,
+            'format': 'bestvideo+bestaudio/best',
         })
 
     try:
