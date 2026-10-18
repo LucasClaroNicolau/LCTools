@@ -2,6 +2,7 @@ import os
 import time
 import threading
 import uuid
+import requests
 from flask import Flask, render_template, request, send_file, jsonify
 from rembg import remove
 from PIL import Image
@@ -9,24 +10,18 @@ from PIL import Image
 app = Flask(__name__)
 app.secret_key = "lc-tools-chave-secreta-para-mensagens-flash"
 
-# Limite máximo de upload (50 MB)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
-
 DOWNLOAD_FOLDER = os.path.join('static', 'uploads')
 app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
-FILE_EXPIRATION_SECONDS = 300  # 5 minutos
+FILE_EXPIRATION_SECONDS = 300
 
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
 
-# Dicionário em memória para armazenar o progresso dos downloads
 PROGRESS_STORE = {}
 
 
-# --- Gerenciamento de Limpeza Automática ---
-
 def clear_download_folder():
-    """Remove todos os arquivos antigos da pasta de temporários ao iniciar o servidor."""
     if os.path.exists(DOWNLOAD_FOLDER):
         for filename in os.listdir(DOWNLOAD_FOLDER):
             file_path = os.path.join(DOWNLOAD_FOLDER, filename)
@@ -34,32 +29,11 @@ def clear_download_folder():
                 if os.path.isfile(file_path) or os.path.islink(file_path):
                     os.remove(file_path)
             except Exception as e:
-                print(f"[STARTUP CLEANUP ERROR] Erro ao deletar {filename}: {e}")
+                print(f"[STARTUP CLEANUP ERROR] {e}")
 
 
-def auto_clean_files():
-    """Thread em segundo plano para excluir arquivos com mais de 5 minutos."""
-    while True:
-        now = time.time()
-        try:
-            for filename in os.listdir(DOWNLOAD_FOLDER):
-                file_path = os.path.join(DOWNLOAD_FOLDER, filename)
-                if os.path.isfile(file_path):
-                    if (now - os.path.getmtime(file_path)) > FILE_EXPIRATION_SECONDS:
-                        os.remove(file_path)
-                        print(f"[CLEANUP] Arquivo removido por expiração: {filename}")
-        except Exception as e:
-            print(f"[CLEANUP ERROR] {e}")
-        time.sleep(60)
-
-
-# Executa limpeza inicial e dispara a thread de background
 clear_download_folder()
-cleaner_thread = threading.Thread(target=auto_clean_files, daemon=True)
-cleaner_thread.start()
 
-
-# --- Rotas Principais e API de Progresso ---
 
 @app.route('/')
 def index():
@@ -73,46 +47,85 @@ def remove_bg_page():
 
 @app.route('/progress/<task_id>')
 def get_progress(task_id):
-    """Retorna o percentual e status em tempo real via JSON."""
-    data = PROGRESS_STORE.get(task_id, {"progress": 0, "status": "starting"})
-    return jsonify(data)
+    return jsonify(PROGRESS_STORE.get(task_id, {"progress": 0, "status": "starting"}))
 
 
 @app.route('/get-file/<task_id>')
 def get_file(task_id):
-    """Baixa o arquivo gerado assim que o processamento do BG Remover chega a 100%."""
     task = PROGRESS_STORE.get(task_id)
     if task and task.get("status") == "completed" and os.path.exists(task.get("file_path")):
         return send_file(task["file_path"], as_attachment=True)
     return "Arquivo não encontrado ou processamento incompleto.", 404
 
 
-# --- Lógica de Remoção de Fundo (Local / Servidor) ---
-
-def process_bg_removal(task_id, input_image_path, original_filename):
+def process_youtube_via_api(task_id, url, format_type):
     try:
-        PROGRESS_STORE[task_id] = {"progress": 25, "status": "processing", "msg": "Carregando imagem..."}
-        time.sleep(0.3)
+        PROGRESS_STORE[task_id] = {"progress": 30, "status": "processing", "msg": "A contactar API de extração..."}
 
-        input_image = Image.open(input_image_path)
-        PROGRESS_STORE[task_id] = {"progress": 55, "status": "processing", "msg": "Removendo o fundo com IA..."}
+        api_instances = [
+            'https://api.cobalt.tools/api/json',
+            'https://cobalt-api.kwi.mobi/api/json'
+        ]
 
-        output_image = remove(input_image)
-        PROGRESS_STORE[task_id] = {"progress": 85, "status": "processing", "msg": "Gerando arquivo em PNG transparente..."}
+        download_url = None
+        for instance in api_instances:
+            try:
+                response = requests.post(instance, json={
+                    "url": url,
+                    "downloadMode": "audio" if format_type == 'mp3' else "auto",
+                    "audioFormat": "mp3"
+                }, headers={
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0'
+                }, timeout=10)
 
-        unique_filename = f"no_bg_{uuid.uuid4().hex[:8]}.png"
-        output_path = os.path.join(DOWNLOAD_FOLDER, unique_filename)
-        output_image.save(output_path, format="PNG")
+                data = response.json()
+                if data.get('url'):
+                    download_url = data['url']
+                    break
+            except Exception:
+                continue
 
-        if os.path.exists(input_image_path):
-            os.remove(input_image_path)
+        if not download_url:
+            raise Exception("Não foi possível extrair o link de download pelas APIs públicas.")
 
         PROGRESS_STORE[task_id] = {
             "progress": 100,
             "status": "completed",
-            "file_path": output_path,
-            "filename": f"sem_fundo_{original_filename}"
+            "file_path": download_url,  # Redireciona o link direto obtido
+            "filename": "youtube_media"
         }
+    except Exception as e:
+        PROGRESS_STORE[task_id] = {"progress": 0, "status": "error", "error": str(e)}
+
+
+@app.route('/start-youtube', methods=['POST'])
+def start_youtube():
+    url = request.form.get('url')
+    format_type = request.form.get('format_type', 'mp4')
+    if not url:
+        return jsonify({"error": "Insira uma URL válida."}), 400
+
+    task_id = str(uuid.uuid4())
+    PROGRESS_STORE[task_id] = {"progress": 10, "status": "starting", "msg": "Iniciando..."}
+    threading.Thread(target=process_youtube_via_api, args=(task_id, url, format_type), daemon=True).start()
+    return jsonify({"task_id": task_id})
+
+
+# --- Lógica de Remoção de Fundo ---
+def process_bg_removal(task_id, input_image_path, original_filename):
+    try:
+        PROGRESS_STORE[task_id] = {"progress": 25, "status": "processing", "msg": "Carregando imagem..."}
+        input_image = Image.open(input_image_path)
+        PROGRESS_STORE[task_id] = {"progress": 55, "status": "processing", "msg": "Removendo o fundo com IA..."}
+        output_image = remove(input_image)
+        output_path = os.path.join(DOWNLOAD_FOLDER, f"no_bg_{uuid.uuid4().hex[:8]}.png")
+        output_image.save(output_path, format="PNG")
+        if os.path.exists(input_image_path):
+            os.remove(input_image_path)
+        PROGRESS_STORE[task_id] = {"progress": 100, "status": "completed", "file_path": output_path,
+                                   "filename": f"sem_fundo_{original_filename}"}
     except Exception as e:
         PROGRESS_STORE[task_id] = {"progress": 0, "status": "error", "error": str(e)}
 
@@ -122,22 +135,12 @@ def start_remove_bg():
     file = request.files.get('image')
     if not file or file.filename == '':
         return jsonify({"error": "Nenhuma imagem selecionada."}), 400
-
     temp_input_path = os.path.join(DOWNLOAD_FOLDER, f"temp_{uuid.uuid4().hex}_{file.filename}")
     file.save(temp_input_path)
-
     task_id = str(uuid.uuid4())
-    PROGRESS_STORE[task_id] = {"progress": 10, "status": "starting", "msg": "Iniciando a inteligência artificial..."}
-
-    thread = threading.Thread(target=process_bg_removal, args=(task_id, temp_input_path, file.filename))
-    thread.start()
-
+    PROGRESS_STORE[task_id] = {"progress": 10, "status": "starting", "msg": "Iniciando..."}
+    threading.Thread(target=process_bg_removal, args=(task_id, temp_input_path, file.filename), daemon=True).start()
     return jsonify({"task_id": task_id})
-
-
-@app.errorhandler(413)
-def request_entity_too_large(error):
-    return jsonify({"error": "O arquivo é muito grande! O limite máximo é 50 MB."}), 413
 
 
 if __name__ == '__main__':
