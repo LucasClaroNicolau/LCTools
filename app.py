@@ -112,17 +112,12 @@ def process_youtube(task_id, url, format_type):
                 "msg": "Convertendo / Finalizando arquivo..."
             }
 
-    # Configuração forçando apenas o cliente Web e usando os cookies/headers de navegador
+    # Configuração usando os Cookies + Headers de Navegador (sem travar no cliente web puro)
     ydl_opts = {
         'cookiefile': 'youtube.com_cookies.txt',
         'outtmpl': output_template,
         'progress_hooks': [progress_hook],
         'noplaylist': True,
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['web']  # Trava estritamente no web player para evitar erros 400 de mobile
-            }
-        },
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
