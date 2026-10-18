@@ -112,15 +112,18 @@ def process_youtube(task_id, url, format_type):
                 "msg": "Convertendo / Finalizando arquivo..."
             }
 
-    # Configuração com Cookies e Clientes Otimizados (sem dependência de impersonação)
+    # Caminho absoluto para garantir a leitura correta do arquivo de cookies
+    cookies_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'youtube.com_cookies.txt')
+
+    # Configuração usando o cliente 'tv' (Smart TV) para evitar exigência de PO Token e bloqueio de Datacenter
     ydl_opts = {
-        'cookiefile': 'youtube.com_cookies.txt',
+        'cookiefile': cookies_path,
         'outtmpl': output_template,
         'progress_hooks': [progress_hook],
         'noplaylist': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'web']
+                'player_client': ['tv']
             }
         },
         'http_headers': {
