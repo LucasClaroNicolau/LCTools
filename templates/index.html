@@ -3,18 +3,17 @@
 {% block content %}
 <section class="hero-section">
     <div class="tag-pill">
-        <i class="fa-solid fa-circle-dot"></i> YouTube Downloader
+        <i class="fa-solid fa-circle-dot"></i> Baixe Vídeos ou Áudios do YouTube
     </div>
-    <h1 class="hero-title">Baixe Vídeos e Áudios do YouTube</h1>
     <p class="hero-subtitle">
-        Cole o link de um vídeo ou Shorts do YouTube, selecione o formato desejado (MP4 ou MP3) e faça o download em alta qualidade em segundos.
+        Cole o link de um vídeo ou shorts do YouTube, selecione o formato desejado e faça o download em alta qualidade em segundos.
     </p>
 
     <div class="search-card">
-        <form action="/youtube" method="POST">
+        <form id="youtubeForm">
             <div class="input-wrapper">
                 <i class="fa-solid fa-link search-icon"></i>
-                <input type="url" class="custom-input" id="youtube_url" name="url" placeholder="Cole o link do vídeo ou Shorts do YouTube aqui..." required autocomplete="off">
+                <input type="url" class="custom-input" id="youtube_url" name="url" placeholder="Cole o link do vídeo ou shorts do YouTube aqui..." required autocomplete="off">
                 <button type="button" class="btn-paste" onclick="pasteClipboard('youtube_url')">
                     <i class="fa-regular fa-paste"></i> Colar
                 </button>
@@ -40,4 +39,32 @@
         <i class="fa-regular fa-lightbulb me-1"></i> Dica: Abra o vídeo no YouTube, clique em <strong>Compartilhar → Copiar Link</strong> e cole acima.
     </p>
 </section>
+
+<script>
+    document.getElementById('youtubeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        document.getElementById('loaderTitle').innerText = "Baixando do YouTube";
+        document.getElementById('loaderSubtitle').innerText = "Iniciando conexão...";
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressBar').innerText = '0%';
+
+        try {
+            const response = await fetch('/start-youtube', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.task_id) {
+                trackProgress(data.task_id);
+            } else {
+                alert(data.error || "Erro ao iniciar o download.");
+            }
+        } catch (err) {
+            alert("Ocorreu um erro ao conectar com o servidor.");
+        }
+    });
+</script>
 {% endblock %}

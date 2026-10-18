@@ -3,15 +3,14 @@
 {% block content %}
 <section class="hero-section">
     <div class="tag-pill" style="background-color: #e0f2fe; color: #0284c7;">
-        <i class="fa-solid fa-wand-magic-sparkles"></i> Remoção por IA
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Remoção do Fundo de Todos por IA
     </div>
-    <h1 class="hero-title">Remover Fundo de Fotos</h1>
     <p class="hero-subtitle">
-        Envie sua imagem em JPG, PNG ou WEBP e nossa inteligência artificial removerá o fundo automaticamente mantendo a máxima transparência.
+        Envie sua imagem e nossa inteligência artificial removerá o fundo automaticamente mantendo a máxima transparência.
     </p>
 
     <div class="search-card" style="max-width: 620px;">
-        <form action="/remove-bg" method="POST" enctype="multipart/form-data">
+        <form id="bgForm" enctype="multipart/form-data">
             <div class="dropzone-container" onclick="document.getElementById('imageInput').click();">
                 <i class="fa-solid fa-cloud-arrow-up text-secondary fs-1 mb-3"></i>
                 <h5 class="fw-bold mb-1">Clique para selecionar uma imagem</h5>
@@ -32,5 +31,31 @@
             document.getElementById('fileNameDisplay').innerText = "Arquivo selecionado: " + input.files[0].name;
         }
     }
+
+    document.getElementById('bgForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        document.getElementById('loaderTitle').innerText = "Removendo o Fundo";
+        document.getElementById('loaderSubtitle').innerText = "Enviando imagem para o servidor...";
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressBar').innerText = '0%';
+
+        try {
+            const response = await fetch('/start-remove-bg', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.task_id) {
+                trackProgress(data.task_id);
+            } else {
+                alert(data.error || "Erro ao iniciar o processamento.");
+            }
+        } catch (err) {
+            alert("Ocorreu um erro ao conectar com o servidor.");
+        }
+    });
 </script>
 {% endblock %}
