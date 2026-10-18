@@ -1,70 +1,207 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<section class="hero-section">
-    <div class="tag-pill">
-        <i class="fa-solid fa-circle-dot"></i> Baixe Vídeos ou Áudios do YouTube
-    </div>
-    <p class="hero-subtitle">
-        Cole o link de um vídeo ou shorts do YouTube, selecione o formato desejado e faça o download em alta qualidade em segundos.
-    </p>
-
-    <div class="search-card">
-        <form id="youtubeForm">
-            <div class="input-wrapper">
-                <i class="fa-solid fa-link search-icon"></i>
-                <input type="url" class="custom-input" id="youtube_url" name="url" placeholder="Cole o link do vídeo ou shorts do YouTube aqui..." required autocomplete="off">
-                <button type="button" class="btn-paste" onclick="pasteClipboard('youtube_url')">
-                    <i class="fa-regular fa-paste"></i> Colar
-                </button>
-                <button type="submit" class="btn-download">
-                    <i class="fa-solid fa-download"></i> Baixar
-                </button>
-            </div>
-
-            <div class="options-container">
-                <label class="option-chip">
-                    <input type="radio" name="format_type" value="mp4" checked>
-                    <span class="chip-label"><i class="fa-solid fa-film"></i> Vídeo MP4</span>
-                </label>
-                <label class="option-chip">
-                    <input type="radio" name="format_type" value="mp3">
-                    <span class="chip-label"><i class="fa-solid fa-music"></i> Áudio MP3</span>
-                </label>
-            </div>
-        </form>
-    </div>
-
-    <p class="tip-text">
-        <i class="fa-regular fa-lightbulb me-1"></i> Dica: Abra o vídeo no YouTube, clique em <strong>Compartilhar → Copiar Link</strong> e cole acima.
-    </p>
-</section>
-
-<script>
-    document.getElementById('youtubeForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const formData = new FormData(this);
-        document.getElementById('loaderTitle').innerText = "Baixando do YouTube";
-        document.getElementById('loaderSubtitle').innerText = "Iniciando conexão...";
-        document.getElementById('progressBar').style.width = '0%';
-        document.getElementById('progressBar').innerText = '0%';
-
-        try {
-            const response = await fetch('/start-youtube', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-
-            if (data.task_id) {
-                trackProgress(data.task_id);
-            } else {
-                alert(data.error || "Erro ao iniciar o download.");
-            }
-        } catch (err) {
-            alert("Ocorreu um erro ao conectar com o servidor.");
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC Tools - Downloader do YouTube</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-    });
-</script>
-{% endblock %}
+        .navbar {
+            background-color: #1e1e1e;
+            border-bottom: 1px solid #333;
+        }
+        .card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+        }
+        .form-control, .form-select {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #333;
+            color: #fff;
+            border-color: #0d6efd;
+            box-shadow: none;
+        }
+        .progress-container {
+            display: none;
+        }
+        .btn-custom {
+            background-color: #ff0000;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-custom:hover {
+            background-color: #cc0000;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">LC Tools</a>
+            <div class="navbar-nav">
+                <a class="nav-link active" href="/">YouTube Downloader</a>
+                <a class="nav-link" href="/remove-bg">Remover Fundo de Imagem</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-auto">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card p-4 shadow-lg">
+                    <h3 class="text-center mb-3">YouTube Downloader</h3>
+                    <p class="text-secondary text-center small mb-4">Processe o download direto pelo navegador sem limitações de servidor.</p>
+
+                    <form id="youtubeForm">
+                        <div class="mb-3">
+                            <label for="url" class="form-label">Cole a URL do Vídeo:</label>
+                            <input type="url" class="form-control" id="url" name="url" placeholder="https://www.youtube.com/watch?v=..." required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="format_type" class="form-label">Formato de Saída:</label>
+                            <select class="form-select" id="format_type" name="format_type">
+                                <option value="mp4">Vídeo (MP4)</option>
+                                <option value="mp3">Áudio (MP3)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" id="btnSubmit" class="btn btn-custom w-100 py-2 mt-2">
+                            Gerar Download
+                        </button>
+                    </form>
+
+                    <!-- Status e Progresso -->
+                    <div id="statusContainer" class="progress-container mt-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span id="statusMessage" class="small text-secondary">Iniciando requisição...</span>
+                            <span id="progressText" class="small fw-bold">0%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-danger" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Mensagens de Erro / Sucesso -->
+                    <div id="alertBox" class="alert mt-3 d-none" role="alert"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-3 text-secondary border-top border-dark mt-auto">
+        <small>&copy; LC Tools - Todos os direitos reservados</small>
+    </footer>
+
+    <script>
+        const form = document.getElementById('youtubeForm');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const statusContainer = document.getElementById('statusContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const statusMessage = document.getElementById('statusMessage');
+        const alertBox = document.getElementById('alertBox');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const url = document.getElementById('url').value;
+            const formatType = document.getElementById('format_type').value;
+
+            // Reset de UI
+            alertBox.classList.add('d-none');
+            statusContainer.style.display = 'block';
+            btnSubmit.disabled = true;
+            updateProgress(20, 'Consultando instâncias públicas...');
+
+            try {
+                // Utilizando API pública do Cobalt/Piped via cliente
+                const apiInstances = [
+                    'https://api.cobalt.tools/api/json',
+                    'https://cobalt-api.kwi.mobi/api/json'
+                ];
+
+                let success = false;
+                let downloadUrl = null;
+
+                for (const instance of apiInstances) {
+                    try {
+                        updateProgress(50, 'Extraindo link de mídia direto...');
+                        const response = await fetch(instance, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                url: url,
+                                downloadMode: formatType === 'mp3' ? 'audio' : 'auto',
+                                audioFormat: 'mp3'
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.url) {
+                            downloadUrl = data.url;
+                            success = true;
+                            break;
+                        }
+                    } catch (err) {
+                        console.warn('Instância falhou, tentando alternativa...', err);
+                    }
+                }
+
+                if (success && downloadUrl) {
+                    updateProgress(100, 'Concluído! Iniciando download...');
+                    
+                    // Dispara o download automático no navegador do cliente
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.target = '_blank';
+                    a.download = '';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    showAlert('success', 'Download iniciado no seu navegador!');
+                } else {
+                    throw new Error('Não foi possível extrair a mídia. Tente novamente em alguns segundos.');
+                }
+
+            } catch (error) {
+                showAlert('danger', error.message || 'Erro ao processar a solicitação.');
+            } finally {
+                btnSubmit.disabled = false;
+            }
+        });
+
+        function updateProgress(percent, msg) {
+            progressBar.style.width = `${percent}%`;
+            progressText.innerText = `${percent}%`;
+            statusMessage.innerText = msg;
+        }
+
+        function showAlert(type, message) {
+            alertBox.className = `alert alert-${type} mt-3`;
+            alertBox.innerText = message;
+            alertBox.classList.remove('d-none');
+        }
+    </script>
+</body>
+</html>
