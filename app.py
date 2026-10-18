@@ -115,7 +115,7 @@ def process_youtube(task_id, url, format_type):
     # Caminho absoluto para garantir a leitura correta do arquivo de cookies
     cookies_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'youtube.com_cookies.txt')
 
-    # Configuração usando o cliente 'tv' (Smart TV) para evitar exigência de PO Token e bloqueio de Datacenter
+    # Configuração usando o cliente 'web_safari' junto aos cookies para contornar o bloqueio de bot em VPS
     ydl_opts = {
         'cookiefile': cookies_path,
         'outtmpl': output_template,
@@ -123,11 +123,11 @@ def process_youtube(task_id, url, format_type):
         'noplaylist': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['tv']
+                'player_client': ['web_safari', 'web']
             }
         },
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
         }
