@@ -10,7 +10,7 @@ from PIL import Image
 app = Flask(__name__)
 app.secret_key = "lc-tools-chave-secreta-para-mensagens-flash"
 
-# Limite máximo de upload (50 MB corrigido)
+# Limite máximo de upload (50 MB)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
 DOWNLOAD_FOLDER = os.path.join('static', 'uploads')
@@ -100,18 +100,30 @@ def process_youtube(task_id, url, format_type):
             downloaded = d.get('downloaded_bytes', 0)
             if total > 0:
                 percent = int((downloaded / total) * 90)  # Reserva 10% para o pós-processamento
-                PROGRESS_STORE[task_id] = {"progress": percent, "status": "downloading",
-                                           "msg": "Baixando mídia do YouTube..."}
+                PROGRESS_STORE[task_id] = {
+                    "progress": percent,
+                    "status": "downloading",
+                    "msg": "Baixando mídia do YouTube..."
+                }
         elif d['status'] == 'finished':
-            PROGRESS_STORE[task_id] = {"progress": 95, "status": "converting",
-                                       "msg": "Convertendo / Finalizando arquivo..."}
+            PROGRESS_STORE[task_id] = {
+                "progress": 95,
+                "status": "converting",
+                "msg": "Convertendo / Finalizando arquivo..."
+            }
 
-    # Base de opções do yt-dlp garantindo SEMPRE o cookie e o hook de progresso
+    # Configuração robusta com Cookie + User-Agent de Navegador Real
     ydl_opts = {
-        'cookiefile': 'youtube.com_cookies.txt',  # Essencial para autenticação
+        'cookiefile': 'youtube.com_cookies.txt',  # Arquivo de cookies exportado
         'outtmpl': output_template,
         'progress_hooks': [progress_hook],
         'noplaylist': True,
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-us,en;q=0.5',
+            'Sec-Fetch-Mode': 'navigate',
+        }
     }
 
     if format_type == 'mp3':
@@ -125,7 +137,7 @@ def process_youtube(task_id, url, format_type):
         })
     else:
         ydl_opts.update({
-            'format': 'bestvideo+bestaudio/best',
+            'format': 'bestvideo+bestaudio/best',  # Máxima qualidade combinada (requer ffmpeg)
         })
 
     try:
@@ -173,8 +185,7 @@ def process_bg_removal(task_id, input_image_path, original_filename):
         PROGRESS_STORE[task_id] = {"progress": 55, "status": "processing", "msg": "Removendo o fundo com IA..."}
 
         output_image = remove(input_image)
-        PROGRESS_STORE[task_id] = {"progress": 85, "status": "processing",
-                                   "msg": "Gerando arquivo em PNG transparente..."}
+        PROGRESS_STORE[task_id] = {"progress": 85, "status": "processing", "msg": "Gerando arquivo em PNG transparente..."}
 
         unique_filename = f"no_bg_{uuid.uuid4().hex[:8]}.png"
         output_path = os.path.join(DOWNLOAD_FOLDER, unique_filename)
