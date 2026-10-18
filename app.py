@@ -112,17 +112,22 @@ def process_youtube(task_id, url, format_type):
                 "msg": "Convertendo / Finalizando arquivo..."
             }
 
-    # Configuração usando os Cookies + Headers de Navegador (sem travar no cliente web puro)
+    # Configuração robusta com Impersonação de TLS + Cookies + Headers
     ydl_opts = {
         'cookiefile': 'youtube.com_cookies.txt',
         'outtmpl': output_template,
         'progress_hooks': [progress_hook],
         'noplaylist': True,
+        'impersonate': 'chrome',  # Emula a impressão digital TLS do Chrome para evitar bloqueio de IP de Datacenter
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web']
+            }
+        },
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-us,en;q=0.5',
-            'Sec-Fetch-Mode': 'navigate',
+            'Accept-Language': 'en-US,en;q=0.5',
         }
     }
 
