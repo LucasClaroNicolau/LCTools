@@ -112,13 +112,12 @@ def process_youtube(task_id, url, format_type):
                 "msg": "Convertendo / Finalizando arquivo..."
             }
 
-    # Configuração robusta com Impersonação de TLS + Cookies + Headers
+    # Configuração com Cookies e Clientes Otimizados (sem dependência de impersonação)
     ydl_opts = {
         'cookiefile': 'youtube.com_cookies.txt',
         'outtmpl': output_template,
         'progress_hooks': [progress_hook],
         'noplaylist': True,
-        'impersonate': 'chrome',  # Emula a impressão digital TLS do Chrome para evitar bloqueio de IP de Datacenter
         'extractor_args': {
             'youtube': {
                 'player_client': ['android', 'web']
